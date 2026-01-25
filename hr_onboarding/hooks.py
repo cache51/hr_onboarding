@@ -33,3 +33,6 @@ fixtures = [
 
 # After install hook to create custom fields
 after_install = "hr_onboarding.setup.after_install"
+
+# After migrate hook to ensure education level options are set
+after_migrate = ["hr_onboarding.setup.set_education_level_options"]
