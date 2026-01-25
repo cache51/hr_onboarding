@@ -20,6 +20,14 @@ fixtures = [
                 "custom_referral_person_name"
             ]]
         ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "=", "Employee Education"],
+            ["field_name", "=", "level"],
+            ["property", "=", "options"]
+        ]
     }
 ]
 

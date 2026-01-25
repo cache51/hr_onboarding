@@ -4,6 +4,7 @@ import frappe
 def after_install():
     """Create custom fields after app installation"""
     create_custom_fields()
+    set_education_level_options()
     frappe.db.commit()
 
 
@@ -56,3 +57,19 @@ def create_custom_fields():
 
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields as _create
     _create(custom_fields)
+
+
+def set_education_level_options():
+    """Set education level options for Employee Education child table"""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    education_levels = "\nSecondary School (THCS)\nHigh School (THPT)\nCollege & Above"
+
+    make_property_setter(
+        doctype="Employee Education",
+        fieldname="level",
+        property="options",
+        value=education_levels,
+        property_type="Text",
+        for_doctype=False
+    )

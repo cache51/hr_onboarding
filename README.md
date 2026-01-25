@@ -33,7 +33,10 @@ bench migrate
 - `nation` (Data) - nationality
 
 ### Employee Education Child Table
-- `level` (Select) - education level (use this, not custom field)
+- `level` (Select) - education level with custom options:
+  - Secondary School (THCS)
+  - High School (THPT)
+  - College & Above
 - `maj_opt_subj` (Text) - major/subject
 - `school_univ` (Small Text) - school name
 
