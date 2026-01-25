@@ -61,15 +61,21 @@ def create_custom_fields():
 
 def set_education_level_options():
     """Set education level options for Employee Education child table"""
-    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-
     education_levels = "\nSecondary School (THCS)\nHigh School (THPT)\nCollege & Above"
+    ps_name = "Employee Education-level-options"
 
-    make_property_setter(
-        doctype="Employee Education",
-        fieldname="level",
-        property="options",
-        value=education_levels,
-        property_type="Text",
-        for_doctype=False
-    )
+    # Check if Property Setter already exists
+    if frappe.db.exists("Property Setter", ps_name):
+        # Update existing Property Setter
+        frappe.db.set_value("Property Setter", ps_name, "value", education_levels)
+    else:
+        # Create new Property Setter
+        from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+        make_property_setter(
+            doctype="Employee Education",
+            fieldname="level",
+            property="options",
+            value=education_levels,
+            property_type="Text",
+            for_doctype=False
+        )
