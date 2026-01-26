@@ -4,10 +4,27 @@ Custom fields for the HR Onboarding Flutter mobile app integration with ERPNext.
 
 ## Installation
 
+### Fresh Install
+
 ```bash
-bench get-app https://github.com/cache51/hr_onboarding.git
+# Get the app from GitHub (specific version)
+bench get-app https://github.com/cache51/hr_onboarding.git --branch v1.0.2
+
+# Install to your site
 bench --site YOUR_SITE install-app hr_onboarding
-bench migrate
+
+# Run migrations
+bench --site YOUR_SITE migrate
+```
+
+### Update Existing Installation
+
+```bash
+# Update the app
+bench update --apps hr_onboarding
+
+# Run migrations
+bench --site YOUR_SITE migrate
 ```
 
 ## Custom Fields Created
