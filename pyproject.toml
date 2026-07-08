@@ -7,6 +7,10 @@ description = "Custom fields for HR onboarding mobile app"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
+dependencies = [
+    "segno>=1.6",
+    "weasyprint>=62",
+]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]

@@ -6,6 +6,11 @@ app_email = "admin@rgm.vn"
 app_license = "MIT"
 required_apps = ["frappe", "erpnext"]
 
+# Client scripts injected into doctype forms
+doctype_js = {
+    "Employee": "public/js/employee_id_card.js"
+}
+
 # Fixtures - auto-install custom fields when app is installed
 fixtures = [
     {
