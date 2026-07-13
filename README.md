@@ -1,31 +1,74 @@
 # HR Onboarding - Frappe Custom Fields App
 
-Custom fields for the HR Onboarding Flutter mobile app integration with ERPNext.
+Custom fields for the HR Onboarding Flutter mobile app integration with ERPNext,
+plus **Employee ID card printing** — a "Print ID Card" button on the Employee form
+(see [Employee ID Card](#employee-id-card)).
 
 ## Installation
+
+### System prerequisites (once per bench host)
+
+The ID card renders with **WeasyPrint**, which needs Pango and friends at the OS
+level (these are system libraries, NOT Python packages). Run once, as root, on the
+bench host:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
+                        libharfbuzz0b libgdk-pixbuf-2.0-0 libcairo2
+# Vietnamese text needs a Unicode font — DejaVu is usually already present:
+fc-list | grep -qi dejavu || sudo apt-get install -y fonts-dejavu
+```
+
+> Only skip this if you won't use the ID card. Without Pango, install/build still
+> succeed, but generating a card fails with `cannot load library 'libpango-1.0.so'`.
 
 ### Fresh Install
 
 ```bash
-# Get the app from GitHub (specific version)
-bench get-app https://github.com/cache51/hr_onboarding.git --branch v1.0.2
+# Get the app from GitHub (latest release)
+bench get-app https://github.com/cache51/hr_onboarding.git --branch v1.6.0
 
-# Install to your site
+# Install to your site (also installs the Python deps: segno, weasyprint)
 bench --site YOUR_SITE install-app hr_onboarding
 
-# Run migrations
+# Build the "Print ID Card" button assets, migrate, restart
+bench build --app hr_onboarding
 bench --site YOUR_SITE migrate
+bench restart
 ```
 
 ### Update Existing Installation
 
 ```bash
-# Update the app
-bench update --apps hr_onboarding
+# Pull the new version. If already tracking the repo:
+cd apps/hr_onboarding && git fetch && git checkout v1.6.0 && cd ../..
+# Install/refresh the Python deps (segno, weasyprint)
+bench setup requirements hr_onboarding
 
-# Run migrations
+# Build assets, migrate, restart
+bench build --app hr_onboarding
 bench --site YOUR_SITE migrate
+bench restart
 ```
+
+## Employee ID Card
+
+Adds a **Print ID Card** button to the Employee form (shown to *HR User*, *HR
+Manager*, *System Manager*). It renders the HR-approved worker badge —
+**THẺ CÔNG NHÂN VIÊN** (crown logo, company header, QR = MSNV, photo, name,
+department, position, join date) — and downloads it as `ID-<MSNV>.pdf`. The QR
+encodes the MSNV (`Employee.name`), so the same card doubles as the kiosk/gate badge.
+
+| Piece | Location |
+|-------|----------|
+| Renderer (WeasyPrint, vendored from the leave app) | `hr_onboarding/id_card/employee_card.py` |
+| Whitelisted endpoint (HR-gated) | `hr_onboarding.hr_onboarding.id_card.api.print_employee_id_card` |
+| Button (wired via `doctype_js`) | `hr_onboarding/public/js/employee_id_card.js` |
+| Python deps | `segno`, `weasyprint` (`pyproject.toml`) |
+| System deps | Pango et al. — see [System prerequisites](#system-prerequisites-once-per-bench-host) |
+
+Uses the employee's photo (`Employee.image`) when present, else a blank "ẢNH 3×4" box.
 
 ## Custom Fields Created
 
