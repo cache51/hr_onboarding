@@ -350,8 +350,13 @@ def render_employee_card_sheet(employees: list[EmployeeCardData]) -> bytes:
 
 # ── 9-up sheet, FORM layout (matches HR's XLSX) ──────────────────────────────
 # Left-aligned company header top-left, QR floated top-right, "THẺ CÔNG NHÂN VIÊN"
-# centred below, then photo, name, and centred info — i.e. the same arrangement as
-# the THẺ_RGM_with_QR.xlsx template, at CR80 (54 × 85.6 mm), 9 per A4.
+# centred below, then photo, name, and centred info — the same arrangement as the
+# THẺ_RGM_with_QR.xlsx template.
+#
+# Card size 55 × 80 mm with a 30 × 40 mm photo box — HR's annotated sample of
+# 10 Aug 2026 ("Employee app issues 100826.xlsx" item 5). The photo box is the
+# standard Vietnamese 3×4 cm ID photo EXACTLY, so a physical photo can be glued
+# on the printed card. Do not resize the box without re-confirming with HR.
 
 _FORM_COMPANY_LINE = "CÔNG TY TNHH MTV"
 _FORM_ADDRESS = "Lô 04, KCN Điện Nam - Điện Ngọc, ĐN"   # full address, as in the XLS
@@ -382,7 +387,7 @@ def _form_card_html(emp: EmployeeCardData) -> str:
   <div class="f-bottom">
     <div class="f-photo">{photo}</div>
     <div class="f-ident">
-      <div class="f-name">{emp.employee_name}</div>
+      <div class="f-name{' f-name-sm' if len(emp.employee_name) > 26 else ''}">{emp.employee_name}</div>
       <div class="f-info">
         <div><span class="f-fk">Mã số thẻ: </span><span class="f-fv f-id">{emp.employee_id}</span></div>
         <div><span class="f-fk">Bộ phận: </span><span class="f-fv">{_dept_vi(emp.department)}</span></div>
@@ -394,26 +399,28 @@ def _form_card_html(emp: EmployeeCardData) -> str:
 </div>"""
 
 
-# Exact XLS font sizes (Times New Roman bold): header 5pt, title 14pt, name 13pt,
-# Mã số thẻ 10pt, Bộ phận 9pt, Chức vụ 11pt, Ngày vào làm 10pt. Card 64×93mm so 9
-# still fit on A4 while keeping those sizes; logo top-left, QR top-right.
+# Times New Roman bold throughout (the XLS look). Card 55×80mm per HR's annotated
+# sample; the 30×40mm photo dominates, so the header/QR/info are compressed around
+# it. 3 × 55 + 2 × 4 = 173mm wide, 3 × 80 + 2 × 4 = 248mm tall — 9 per A4 at 100%.
 _FORM_SHEET_CSS = """
 @page { size: A4 portrait; margin: 5mm 0 0 0; }   /* top margin so printers don't clip the top row */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "Times New Roman","DejaVu Serif",serif; background: #fff; }
 
-.sheet { border-collapse: separate; border-spacing: 4mm 5mm; margin: 0 auto; }
-.sheet td { width: 63mm; height: 85mm; padding: 0; vertical-align: top; }
+.sheet { border-collapse: separate; border-spacing: 4mm 4mm; margin: 0 auto; }
+.sheet td { width: 55mm; height: 80mm; padding: 0; vertical-align: top; }
 /* Multi-page master sheets (788 cards ≈ 88 pages): never split a row of 3 cards
    across a page break — each row moves whole to the next page. */
 .sheet tr { break-inside: avoid; page-break-inside: avoid; }
 
-.f-card { width: 63mm; height: 85mm; border: 0.5mm solid #111; border-radius: 2mm;
-          padding: 2.5mm; overflow: hidden; position: relative;
+.f-card { width: 55mm; height: 80mm; border: 0.5mm solid #111; border-radius: 2mm;
+          padding: 2mm; overflow: hidden; position: relative;
           break-inside: avoid; page-break-inside: avoid; }
 /* QR floated in the top-right corner, OUT of the header flow so the address can
-   never push it off the edge. */
-.f-qr { position: absolute; top: 2.5mm; right: 2.5mm; width: 19mm; height: 19mm; }
+   never push it off the edge. Shrunk 19→14mm to make room for the 30×40 photo: an
+   MSNV-only QR is version 1 (21 modules + border), ≈0.52mm/module at 13mm — well
+   inside camera range, but DO a kiosk test-scan on the first physical print. */
+.f-qr { position: absolute; top: 2mm; right: 2mm; width: 13mm; height: 13mm; }
 
 /* the header block + title, nudged up 6pt as a group */
 .f-top { position: relative; top: 0; }
@@ -422,46 +429,49 @@ body { font-family: "Times New Roman","DejaVu Serif",serif; background: #fff; }
 /* name + info nudged a further 9pt down (photo stays) */
 .f-ident { position: relative; top: 0; }
 
-/* header: logo | text (5pt) | QR top-right. table-layout:fixed keeps the QR cell's
-   width so the long address can never push the QR off the card edge. */
 /* header: logo + company text on the left (the QR is absolute, top-right). The
-   header table reserves only ~37mm so the text never reaches under the QR. */
-/* header cells aligned to the TOP so the logo + company text start level with the
-   top of the QR (not hanging down to the QR's bottom edge). */
-.f-head { display: table; width: 34mm; table-layout: fixed; border-spacing: 0; }
-.f-head-logo { display: table-cell; width: 13mm; vertical-align: top; text-align: left; }
-.f-logo { width: 13mm; height: auto; display: block; }
-.f-logo-fb { font-weight: 900; color: #c1121f; font-size: 13pt; }
-/* text column kept narrow (≈21mm) so the long address WRAPS to two short lines
-   that end well left of the QR — no more grazing the QR corner. */
-.f-head-text { display: table-cell; width: 21mm; vertical-align: top; text-align: left; }
-.f-co-shift { transform: translateX(-1mm); }   /* small left nudge toward the logo */
-.f-co-line { font-size: 5pt; font-weight: 700; line-height: 1.6; white-space: nowrap; }
-.f-co-name { font-size: 5pt; font-weight: 700; line-height: 1.6; white-space: nowrap; }
-.f-co-addr { font-size: 5pt; font-weight: 700; line-height: 1.6; }  /* address wraps to 2 lines */
+   header table reserves ~33mm so the text never reaches under the 14mm QR.
+   Cells aligned to the TOP so logo + text start level with the QR's top. */
+.f-head { display: table; width: 33mm; table-layout: fixed; border-spacing: 0; }
+.f-head-logo { display: table-cell; width: 11mm; vertical-align: top; text-align: left; }
+.f-logo { width: 10.5mm; height: auto; display: block; }
+.f-logo-fb { font-weight: 900; color: #c1121f; font-size: 11pt; }
+/* text column kept narrow (≈22mm) so the long address WRAPS to two short lines
+   that end well left of the QR. */
+.f-head-text { display: table-cell; width: 22mm; vertical-align: top; text-align: left; }
+.f-co-shift { transform: translateX(-0.5mm); }   /* small left nudge toward the logo */
+/* 1.3 leading, not 1.55: the address wraps, so the header is FIVE lines tall —
+   at 1.55 it pushed the last info row ("Ngày vào làm") off the card bottom. */
+.f-co-line { font-size: 5pt; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+.f-co-name { font-size: 5pt; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+.f-co-addr { font-size: 5pt; font-weight: 700; line-height: 1.3; }  /* address wraps to 2 lines */
 
-/* the header was raised ~9mm (cells no longer pushed down by inherited border-spacing)
-   so it tops out level with the QR; add that gap back above the title so the title +
-   photo + identity block stay exactly where they were before. */
-.f-title { font-size: 11pt; font-weight: 700; text-align: center; margin: 5mm 0 1mm 0;
-           position: relative; top: -2pt; }   /* margin reclaimed so a 2-line name fits */
+/* every vertical mm below the header belongs to the 40mm photo — margins are the
+   minimum that keeps the blocks from touching. The 5-line header is ~11.5mm and
+   the QR bottom sits 13mm below the inner top; 1.5mm top margin puts the centred
+   title just past it, so the text can't graze the QR corner. */
+.f-title { font-size: 10pt; font-weight: 700; text-align: center; margin: 1.5mm 0 0.8mm 0; }
 
-/* photo — trimmed slightly (30→27mm) to make room for 2-line names */
-.f-photo { width: 24mm; height: 27mm; margin: 0 auto 1mm;
+/* photo — EXACTLY 30 × 40 mm (standard VN 3×4 ID photo; HR glues a physical
+   photo on the printed card, so the box must not drift from this size). */
+.f-photo { width: 30mm; height: 40mm; margin: 0 auto 0.8mm;
            border: 0.4mm solid #999; overflow: hidden; }
 .f-photo-img { width: 100%; height: 100%; object-fit: cover; }
 .f-photo-ph { display: table; width: 100%; height: 100%; background: #f5f5f5; }
 .f-photo-inner { display: table-cell; vertical-align: middle; text-align: center;
                  color: #aaa; font-size: 6pt; line-height: 1.5; }
 
-/* identity — centred, exact XLS sizes */
-.f-name { font-size: 11pt; font-weight: 700; text-align: center; line-height: 1.05; margin-bottom: .8mm; }
+/* identity — centred; sizes stepped down one notch from the 63×85 card. The
+   vertical budget only closes with the name on ONE line, so names over 26 chars
+   get .f-name-sm from the renderer instead of being allowed to wrap. */
+.f-name { font-size: 9.5pt; font-weight: 700; text-align: center; line-height: 1.05; margin-bottom: .3mm; }
+.f-name-sm { font-size: 6.5pt; }   /* one line up to ~38 chars — 7.5pt still wrapped at 31 */
 .f-info { text-align: center; }
-.f-info > div { font-weight: 700; line-height: 1.3; }
-.f-info > div:nth-child(1) { font-size: 8pt; }
-.f-info > div:nth-child(2) { font-size: 7pt; }
-.f-info > div:nth-child(3) { font-size: 9pt; }
-.f-info > div:nth-child(4) { font-size: 8pt; }
+.f-info > div { font-weight: 700; line-height: 1.15; }
+.f-info > div:nth-child(1) { font-size: 7.5pt; }
+.f-info > div:nth-child(2) { font-size: 6.5pt; }
+.f-info > div:nth-child(3) { font-size: 8pt; }
+.f-info > div:nth-child(4) { font-size: 7.5pt; }
 .f-fk { font-weight: 700; }
 .f-fv { font-weight: 700; }
 .f-id { font-family: inherit; }

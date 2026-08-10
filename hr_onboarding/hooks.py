@@ -11,6 +11,11 @@ doctype_js = {
     "Employee": "public/js/employee_id_card.js"
 }
 
+# List-view script: batch "Print ID Cards" button + dialog on the Employee list
+doctype_list_js = {
+    "Employee": "public/js/employee_id_card_list.js"
+}
+
 # Fixtures - auto-install custom fields when app is installed
 fixtures = [
     {
