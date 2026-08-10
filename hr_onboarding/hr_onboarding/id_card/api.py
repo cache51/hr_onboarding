@@ -124,18 +124,22 @@ def print_employee_id_cards(codes=None, from_code=None, to_code=None,
 	if not frappe.has_permission("Employee", "read"):
 		raise frappe.PermissionError(_("Not permitted to read Employees"))
 
-	filters = {"status": "Active"}
+	filters = [["status", "=", "Active"]]
 	if codes:
 		wanted = [c for c in re.split(r"[\s,;]+", codes) if c]
-		filters["name"] = ["in", wanted]
+		filters.append(["name", "in", wanted])
 	elif from_code or to_code:
 		if not (from_code and to_code):
 			frappe.throw(_("Both from_code and to_code are required for a code range"))
-		filters["name"] = ["between", [from_code.strip(), to_code.strip()]]
+		# NOT ["between", …]: Frappe's `between` operator is date-oriented and
+		# renders string bounds as raw SQL (ProgrammingError on MariaDB — found
+		# on the first prod test). Two explicit comparisons are version-proof.
+		filters.append(["name", ">=", from_code.strip()])
+		filters.append(["name", "<=", to_code.strip()])
 	else:
 		if not (from_joining and to_joining):
 			frappe.throw(_("Both from_joining and to_joining are required for a date range"))
-		filters["date_of_joining"] = ["between", [from_joining, to_joining]]
+		filters.append(["date_of_joining", "between", [from_joining, to_joining]])
 
 	names = [r.name for r in frappe.get_list("Employee", filters=filters,
 	                                         fields=["name"], order_by="name",
