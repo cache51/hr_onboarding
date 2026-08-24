@@ -362,6 +362,27 @@ _FORM_COMPANY_LINE = "CÔNG TY TNHH MTV"
 _FORM_ADDRESS = "Lô 04, KCN Điện Nam - Điện Ngọc, ĐN"   # full address, as in the XLS
 
 
+# Largest font size that still keeps a name on ONE line inside the card's 50mm
+# inner width. Measured with WeasyPrint (Times New Roman bold, uppercase
+# Vietnamese): 9.5pt fits 19 chars, 9pt 20, 8.5pt 22, 8pt 23, 7.5pt 25, 7pt 26,
+# 6.5pt 27, 6pt 31, 5.5pt 33. Each threshold sits one char below its measurement
+# so wide letter combinations (M, W) still fit.
+#
+# The card is a fixed 80mm with overflow:hidden, so a name that wraps to a second
+# line pushes "Ngày vào làm" past the bottom edge and it is silently clipped.
+_FORM_NAME_SIZES = ((19, 9.5), (20, 9.0), (21, 8.5), (23, 8.0), (24, 7.5),
+                    (26, 7.0), (27, 6.5), (30, 6.0), (32, 5.5))
+
+
+def _form_name_pt(name: str) -> float:
+    """Font size in pt that keeps `name` on one line on the FORM card."""
+    length = len((name or "").strip())
+    for limit, size in _FORM_NAME_SIZES:
+        if length <= limit:
+            return size
+    return 5.0
+
+
 def _form_card_html(emp: EmployeeCardData) -> str:
     logo = _logo_data_uri()
     logo_html = (f'<img class="f-logo" src="{logo}" alt="RGM">' if logo
@@ -387,7 +408,7 @@ def _form_card_html(emp: EmployeeCardData) -> str:
   <div class="f-bottom">
     <div class="f-photo">{photo}</div>
     <div class="f-ident">
-      <div class="f-name{' f-name-sm' if len(emp.employee_name) > 26 else ''}">{emp.employee_name}</div>
+      <div class="f-name" style="font-size:{_form_name_pt(emp.employee_name)}pt">{emp.employee_name}</div>
       <div class="f-info">
         <div><span class="f-fk">Mã số thẻ: </span><span class="f-fv f-id">{emp.employee_id}</span></div>
         <div><span class="f-fk">Bộ phận: </span><span class="f-fv">{_dept_vi(emp.department)}</span></div>
@@ -462,10 +483,10 @@ body { font-family: "Times New Roman","DejaVu Serif",serif; background: #fff; }
                  color: #aaa; font-size: 6pt; line-height: 1.5; }
 
 /* identity — centred; sizes stepped down one notch from the 63×85 card. The
-   vertical budget only closes with the name on ONE line, so names over 26 chars
-   get .f-name-sm from the renderer instead of being allowed to wrap. */
+   vertical budget only closes with the name on ONE line, so the renderer sets an
+   inline font-size per name (see _form_name_pt); 9.5pt below is the largest
+   step and applies to short names. */
 .f-name { font-size: 9.5pt; font-weight: 700; text-align: center; line-height: 1.05; margin-bottom: .3mm; }
-.f-name-sm { font-size: 6.5pt; }   /* one line up to ~38 chars — 7.5pt still wrapped at 31 */
 .f-info { text-align: center; }
 .f-info > div { font-weight: 700; line-height: 1.15; }
 .f-info > div:nth-child(1) { font-size: 7.5pt; }
