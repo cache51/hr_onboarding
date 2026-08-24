@@ -27,7 +27,9 @@ fixtures = [
                 "custom_cccd_front_image",
                 "custom_cccd_back_image",
                 "custom_shirt_size",
-                "custom_referral_person_name"
+                "custom_referral_person_name",
+                "custom_hometown_new",
+                "custom_permanent_address_new"
             ]]
         ]
     },
@@ -45,4 +47,10 @@ fixtures = [
 after_install = "hr_onboarding.setup.after_install"
 
 # After migrate hook to ensure education level options are set
-after_migrate = ["hr_onboarding.setup.set_education_level_options"]
+# create_custom_fields is idempotent, and running it on migrate (not just on
+# install) is what lets new fields reach sites where the app is already
+# installed — after_install never runs again for them.
+after_migrate = [
+    "hr_onboarding.setup.create_custom_fields",
+    "hr_onboarding.setup.set_education_level_options",
+]

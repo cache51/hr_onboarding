@@ -51,6 +51,24 @@ def create_custom_fields():
                 "label": "Referral Person Name",
                 "insert_after": "candidate_source",
                 "translatable": 0
+            },
+            # Vietnam's 2025 province/commune merger renamed many addresses, so
+            # the value printed on an employee's CCCD no longer matches the
+            # current administrative name. These hold the post-merger ("mới")
+            # version alongside the original fields.
+            {
+                "fieldname": "custom_hometown_new",
+                "fieldtype": "Small Text",
+                "label": "Hometown (new)",
+                "insert_after": "custom_hometown",
+                "translatable": 0
+            },
+            {
+                "fieldname": "custom_permanent_address_new",
+                "fieldtype": "Small Text",
+                "label": "Permanent Address (new)",
+                "insert_after": "permanent_address",
+                "translatable": 0
             }
         ]
     }
