@@ -1,0 +1,33 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2026-08-29 06:10:00.000000",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2026-08-29 06:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR Onboarding",
+ "name": "Missing Social Insurance No",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select\n\te.name as \"Mã NV / ID:Link/Employee:90\",\n\te.employee_name as \"Họ tên / Name:Data:220\",\n\te.department as \"Bộ phận / Department:Link/Department:200\",\n\te.date_of_joining as \"Ngày vào làm / Joined:Date:110\",\n\tdatediff(curdate(), e.date_of_joining) as \"Số ngày / Days:Int:90\",\n\te.custom_national_id_num as \"Số CCCD / National ID:Data:150\",\n\te.cell_number as \"Điện thoại / Phone:Data:120\"\nfrom `tabEmployee` e\nwhere e.status = 'Active'\n\tand ifnull(e.social_insurance_no, '') = ''\norder by e.date_of_joining desc, e.name desc",
+ "ref_doctype": "Employee",
+ "report_name": "Missing Social Insurance No",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
+}
